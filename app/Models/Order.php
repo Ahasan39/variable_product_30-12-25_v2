@@ -9,7 +9,7 @@ class Order extends Model
 {
     use HasFactory;
 
-    public function orderdetails()
+    public function orderdetails() 
     {
         return $this->hasMany(OrderDetails::class, 'order_id');
     }
@@ -23,11 +23,11 @@ class Order extends Model
     }
     public function shipping()
     {
-        return $this->belongsTo(Shipping::class, 'id', 'order_id');
+        return $this->hasOne(Shipping::class, 'order_id');
     }
     public function payment()
     {
-        return $this->belongsTo(Payment::class, 'id', 'order_id');
+        return $this->hasOne(Payment::class, 'order_id');
     }
     public function customer()
     {

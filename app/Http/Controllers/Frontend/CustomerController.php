@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Frontend;
 use shurjopayv2\ShurjopayLaravelPackage8\Http\Controllers\ShurjopayController;
-
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Brian2694\Toastr\Facades\Toastr;
@@ -20,6 +20,8 @@ use App\Models\SmsGateway;
 use App\Models\GeneralSetting;
 use App\Models\Division;
 use App\Models\City;
+use App\Models\IpBlock; 
+use App\Models\FraudLog;
 use Session;
 use Hash;
 use Auth;
@@ -267,14 +269,59 @@ class CustomerController extends Controller
        return view('frontEnd.layouts.customer.checkout',compact('shippingcharge', 'bkash_gateway', 'shurjopay_gateway','Divisioin'));
     }
     public function order_save(Request $request){
-        $this->validate($request,[
-            'name'=>'required',
-            'phone'=>'required',
-            'address'=>'required',
-            'area'=>'required',
-            'area_name'=>'required',
-            'shipping_charge'=>'required',
-        ]);
+        if ($request->user_verification_code) {
+            FraudLog::create([
+                'ip_address' => $request->ip(),
+                'type' => 'honeypot',
+                'message' => 'Bot triggered honeypot field.',
+                'context' => json_encode($request->except(['password', 'password_confirmation']))
+            ]);
+            return response()->json(['message' => 'Bot detected!'], 403);
+        }
+        
+        // session submission lock
+        if (Session::has('order_submitting')) {
+            FraudLog::create([
+                'ip_address' => $request->ip(),
+                'type' => 'duplicate',
+                'message' => 'Session submission lock triggered. Rapid click detected.',
+                'context' => json_encode(['url' => $request->fullUrl()])
+            ]);
+            Toastr::error('Your order is being processed. Please wait.', 'Wait!');
+            return redirect()->back();
+        }
+        Session::put('order_submitting', true);
+
+        try {
+            // duplicate order check
+            $previous_order = Order::where('created_at', '>=', now()->subSeconds(60))
+                ->where(function ($query) use ($request) {
+                    $query->where('ip_address', $request->ip());
+                    if (Auth::guard('customer')->check()) {
+                        $query->orWhere('customer_id', Auth::guard('customer')->user()->id);
+                    }
+                })->exists();
+
+            if ($previous_order) {
+                FraudLog::create([
+                    'ip_address' => $request->ip(),
+                    'type' => 'duplicate',
+                    'message' => 'Duplicate order attempt within 60 seconds.',
+                    'context' => json_encode(['phone' => $request->phone])
+                ]);
+                Session::forget('order_submitting');
+                Toastr::error('Your order is already being processed. Please wait 60 seconds.', 'Failed!');
+                return redirect()->back();
+            }
+
+            $this->validate($request,[
+                'name'=>'required',
+                'phone'=>'required',
+                'address'=>'required',
+                'area'=>'required',
+                'area_name'=>'required',
+                'shipping_charge'=>'required',
+            ]);
         // dd($request->all());
         if(Cart::instance('shopping')->count() <= 0) {
             Toastr::error('Your shopping empty', 'Failed!');
@@ -319,7 +366,75 @@ class CustomerController extends Controller
         $order->customer_id      =  $customer_id;
         $order->order_status     = 1;
         $order->note             = $request->note;
+        $order->ip_address       = $request->ip();
+        
+        // Calculate Risk Score
+        $risk_score = 0;
+        $fraud_notes = [];
+
+        // 1. Check for repeating digits in phone
+        if (preg_match('/(\d)\1{4,}/', $request->phone)) {
+            $risk_score += 30;
+            $fraud_notes[] = "Suspicious phone pattern";
+        }
+
+        // 2. Check orders from same IP in last 24h
+        $ip_order_count = Order::where('ip_address', $request->ip())
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+        if ($ip_order_count >= 3) {
+            $risk_score += ($ip_order_count - 2) * 20;
+            $fraud_notes[] = "Multiple orders from same IP ($ip_order_count)";
+        }
+
+        // 3. Check if phone used with different names
+        $distinct_names = Shipping::where('phone', $request->phone)
+            ->distinct('name')
+            ->count();
+        if ($distinct_names > 1) {
+            $risk_score += 15;
+            $fraud_notes[] = "Phone used with different names";
+        }
+
+        // 4. Address length
+        if (strlen($request->address) < 10) {
+            $risk_score += 10;
+            $fraud_notes[] = "Short address";
+        }
+
+        // 5. Geo-Fencing (Flag non-BD IPs)
+        try {
+            $response = Http::timeout(2)->get("http://ip-api.com/json/{$request->ip()}?fields=countryCode");
+            if ($response->successful()) {
+                $country = $response->json('countryCode');
+                if ($country && $country !== 'BD') {
+                    $risk_score += 40;
+                    $fraud_notes[] = "International IP ($country)";
+                }
+            }
+        } catch (\Exception $e) {
+            // Skip if API fails
+        }
+
+        $order->risk_score = min($risk_score, 100);
+        $order->fraud_note = implode(', ', $fraud_notes);
+
         $order->save();
+
+        // Auto Block IP if too many suspicious orders
+        $high_risk_count = Order::where('ip_address', $request->ip())
+            ->where('risk_score', '>=', 80)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+
+        if ($high_risk_count >= 3) {
+            if (!IpBlock::where('ip_no', $request->ip())->exists()) {
+                $block = new IpBlock();
+                $block->ip_no = $request->ip();
+                $block->reason = "Automated block: $high_risk_count high-risk orders detected.";
+                $block->save();
+            }
+        }
         
             $divisions = [
         1 => 'Dhaka',
@@ -418,10 +533,16 @@ class CustomerController extends Controller
             );
             $shurjopay_service = new ShurjopayController();
             return $shurjopay_service->checkout($info);
-        }else{
-            return redirect('customer/order-success/'.$order->id);
+            } else {
+                return redirect('customer/order-success/' . $order->id);
+            }
+        } catch (\Exception $e) {
+            Session::forget('order_submitting');
+            Toastr::error('Something went wrong. Please try again.', 'Error!');
+            return redirect()->back();
+        } finally {
+            Session::forget('order_submitting');
         }
-
     }
 
     public function orders()

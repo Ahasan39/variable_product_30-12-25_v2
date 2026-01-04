@@ -127,7 +127,7 @@ Route::group(['prefix'=>'customer','namespace'=>'Frontend', 'middleware' => ['ip
     Route::post('/forgot-password/resendotp', [CustomerController::class, 'forgot_resend'])->name('customer.forgot.resendotp');
     Route::get('/checkout', [CustomerController::class, 'checkout'])->name('customer.checkout');
    
-    Route::post('/order-save', [CustomerController::class, 'order_save'])->name('customer.ordersave');
+    Route::post('/order-save', [CustomerController::class, 'order_save'])->name('customer.ordersave')->middleware('throttle:5,1');
     Route::get('/order-success/{id}', [CustomerController::class, 'order_success'])->name('customer.order_success');
 Route::post('/incomplete-order/store', [IncompleteOrderController::class, 'store'])
     ->name('incomplete-order.store');
@@ -483,6 +483,7 @@ Route::group(['namespace'=>'Admin','middleware' => ['auth','lock','check_refer']
     Route::post('customer/ip-store', [CustomerManageController::class,'ipblock_store'])->name('customers.ipblock.store');
     Route::post('customer/ip-update', [CustomerManageController::class,'ipblock_update'])->name('customers.ipblock.update');
     Route::post('customer/ip-destroy', [CustomerManageController::class,'ipblock_destroy'])->name('customers.ipblock.destroy');
+    Route::get('customer/fraud-logs', [CustomerManageController::class,'fraud_logs'])->name('customers.fraud_logs');
 });
     
     //Message Routes

@@ -157,6 +157,9 @@
                                     </div>
 
                                     <div class="col-sm-12">
+                                        <div class="form-group" style="display:none;">
+                                            <input type="text" name="user_verification_code" value="">
+                                        </div>
                                         <div class="form-group">
                                             <input type="hidden" id="area_name" name="area_name" value="">
                                             <input type="hidden" id="shipping_charge" name="shipping_charge" value="">

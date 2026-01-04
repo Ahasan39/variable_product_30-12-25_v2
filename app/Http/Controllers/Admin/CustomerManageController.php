@@ -8,8 +8,9 @@ use Illuminate\Support\Arr;
 use App\Models\CustomerProfit;
 use App\Models\Customer;
 use App\Models\IpBlock;
+use App\Models\FraudLog;
 use Toastr;
-use Image;
+use Image; 
 use File;
 use Auth;
 use Hash;
@@ -126,5 +127,10 @@ class CustomerManageController extends Controller
         $delete_data = IpBlock::find($request->id)->delete();
         Toastr::success('Success','IP address delete successfully');
         return redirect()->back();
+    }
+
+    public function fraud_logs(Request $request){
+        $show_data = FraudLog::orderBy('id', 'desc')->paginate(50);
+        return view('backEnd.reports.fraud_logs', compact('show_data'));
     }
 }

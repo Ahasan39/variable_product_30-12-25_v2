@@ -94,6 +94,7 @@
                             <th style="width:10%">Phone</th>
                             <th style="width:10%">Assign</th>
                             <th style="width:10%">Amount</th>
+                            <th style="width:5%">Risk</th>
                             <th style="width:10%">payment Status</th>
                             <th style="width:10%">order Status</th>
                         </tr>
@@ -150,6 +151,15 @@
                             </td>
                             <td>{{$value->user?$value->user->name:'unassigned'}}</td>
                             <td>৳{{$value->amount}}</td>
+                            <td>
+                                @if($value->risk_score >= 70)
+                                    <span class="badge bg-danger" title="{{$value->fraud_note}}">{{$value->risk_score}}%</span>
+                                @elseif($value->risk_score >= 40)
+                                    <span class="badge bg-warning" title="{{$value->fraud_note}}">{{$value->risk_score}}%</span>
+                                @else
+                                    <span class="badge bg-success" title="{{$value->fraud_note}}">{{$value->risk_score}}%</span>
+                                @endif
+                            </td>
                             <td>{{$value->status?$value->status:'Unpaid'}}</td>
                            <td>
                                 {{ 

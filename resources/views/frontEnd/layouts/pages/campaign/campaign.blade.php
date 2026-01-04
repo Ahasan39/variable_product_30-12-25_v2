@@ -342,6 +342,9 @@
                                 </div>
                                 <!-- col-end -->
                                 <div class="col-sm-12">
+                                    <div class="form-group" style="display:none;">
+                                        <input type="text" name="user_verification_code" value="">
+                                    </div>
                                     <div class="form-group">
                                         <button class="order_place" type="submit">অর্ডার কন্ফার্ম করুন </button>
                                     </div>

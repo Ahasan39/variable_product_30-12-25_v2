@@ -21,9 +21,11 @@ use App\Models\Division;
 use App\Models\City;
 use App\Models\Pourosaova;
 use App\Models\Upazila;
+use App\Models\IpBlock;
+use App\Models\FraudLog;
 use Session;
 use Cart;
-use Toastr;
+use Toastr; 
 use Mail;
 
 class OrderController extends Controller
@@ -445,17 +447,51 @@ public function bulk_courier($slug, Request $request)
     }
     
     public function order_store(Request $request){
-        $this->validate($request,[
-            'name'=>'required',
-            'phone'=>'required',
-            'address'=>'required',
-            'area'=>'required',
-        ]);
-
-        if(Cart::instance('pos_shopping')->count() <= 0) {
-            Toastr::error('Your shopping empty', 'Failed!');
+        // session submission lock
+        if (Session::has('pos_order_submitting')) {
+            FraudLog::create([
+                'ip_address' => $request->ip(),
+                'type' => 'duplicate',
+                'message' => 'POS Session lock triggered. Rapid click detected.',
+                'context' => json_encode(['url' => $request->fullUrl()])
+            ]);
+            Toastr::error('Order is being processed. Please wait.', 'Wait!');
             return redirect()->back();
         }
+        Session::put('pos_order_submitting', true);
+
+        try {
+            // duplicate order check
+            $previous_order = Order::where('created_at', '>=', now()->subSeconds(60))
+                ->where('ip_address', $request->ip())
+                ->exists();
+
+            if ($previous_order) {
+                FraudLog::create([
+                    'ip_address' => $request->ip(),
+                    'type' => 'duplicate',
+                    'message' => 'Duplicate POS order attempt within 60 seconds.',
+                    'context' => json_encode(['phone' => $request->phone])
+                ]);
+                Session::forget('pos_order_submitting');
+                Toastr::error('Order is already being processed. Please wait 60 seconds.', 'Failed!');
+                return redirect()->back();
+            }
+
+            $this->validate($request,[
+                'name'=>'required',
+                'phone'=>'required',
+                'address'=>'required',
+                'area'=>'required',
+            ]);
+
+            if(Cart::instance('pos_shopping')->count() <= 0) {
+                Session::forget('pos_order_submitting');
+                Toastr::error('Your shopping empty', 'Failed!');
+                return redirect()->back();
+            }
+            // ... rest of the method logic encapsulated in try ...
+            // (I will use multi_replace if needed but for now let's just close the try block at the end)
 
         $subtotal = Cart::instance('pos_shopping')->subtotal();
         $subtotal = str_replace(',','',$subtotal);
@@ -488,6 +524,53 @@ public function bulk_courier($slug, Request $request)
         $order->customer_id      =  $customer_id;
         $order->order_status     = 1;
         $order->note             = $request->note;
+        $order->ip_address       = $request->ip();
+
+        // Calculate Risk Score
+        $risk_score = 0;
+        $fraud_notes = [];
+
+        // 1. Check for repeating digits in phone
+        if (preg_match('/(\d)\1{4,}/', $request->phone)) {
+            $risk_score += 30;
+            $fraud_notes[] = "Suspicious phone pattern";
+        }
+
+        // 2. Check orders from same IP in last 24h
+        $ip_order_count = Order::where('ip_address', $request->ip())
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+        if ($ip_order_count >= 3) {
+            $risk_score += ($ip_order_count - 2) * 20;
+            $fraud_notes[] = "Multiple orders from same IP ($ip_order_count)";
+        }
+
+        // 3. Check if phone used with different names
+        $distinct_names = Shipping::where('phone', $request->phone)
+            ->distinct('name')
+            ->count();
+        if ($distinct_names > 1) {
+            $risk_score += 15;
+            $fraud_notes[] = "Phone used with different names";
+        }
+
+        // 4. Geo-Fencing
+        try {
+            $response = Http::timeout(2)->get("http://ip-api.com/json/{$request->ip()}?fields=countryCode");
+            if ($response->successful()) {
+                $country = $response->json('countryCode');
+                if ($country && $country !== 'BD') {
+                    $risk_score += 40;
+                    $fraud_notes[] = "International IP ($country)";
+                }
+            }
+        } catch (\Exception $e) {
+            // Skip if API fails
+        }
+
+        $order->risk_score = min($risk_score, 100);
+        $order->fraud_note = implode(', ', $fraud_notes);
+
         $order->save();
 
         // shipping data save
@@ -527,6 +610,13 @@ public function bulk_courier($slug, Request $request)
         Session::forget('product_discount');
         Toastr::success('Thanks, Your order place successfully', 'Success!');
         return redirect('admin/order/pending');
+        } catch (\Exception $e) {
+            Session::forget('pos_order_submitting');
+            Toastr::error('Something went wrong. Please try again.', 'Error!');
+            return redirect()->back();
+        } finally {
+            Session::forget('pos_order_submitting');
+        }
     }
     public function cart_add(Request $request){
         $product = Product::select('id','name','stock','new_price','old_price','purchase_price','slug')->where(['id' => $request->id])->first();
@@ -791,7 +881,10 @@ public function bulk_courier($slug, Request $request)
         $total_cancel = $result['courierData']['summary']['cancelled_parcel'] ?? 0;
         $status = $result['status'] ?? 'N/A';
 
+        $order = Order::find($request->id);
+        
         return view('backEnd.order.fraud_checker', compact(
+            'order',
             'status',
             'name',
             'phone',

@@ -293,6 +293,9 @@
                     <li>
                       <a href="{{route('admin.order_report')}}"><i data-feather="file-plus"></i> Order Reports</a>
                     </li>
+                    <li>
+                      <a href="{{route('customers.fraud_logs')}}"><i data-feather="file-plus"></i> Fraud Logs</a>
+                    </li>
                   </ul>
                 </div>
               </li>

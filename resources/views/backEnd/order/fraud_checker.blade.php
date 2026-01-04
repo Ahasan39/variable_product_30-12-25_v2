@@ -37,6 +37,21 @@
         <h4 class="text-danger">Your Package limit over, Please contact to support</h4>
         <hr>
     @else
+        <div class="alert alert-{{ $order->risk_score >= 70 ? 'danger' : ($order->risk_score >= 40 ? 'warning' : 'success') }} mb-3">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h5 class="mb-0">Internal Risk Score: <strong>{{ $order->risk_score }}%</strong></h5>
+                </div>
+                <div class="col-sm-6 text-end">
+                    <span>IP: {{ $order->ip_address }}</span>
+                </div>
+            </div>
+            @if($order->fraud_note)
+                <hr class="my-2">
+                <p class="mb-0 small"><strong>Risk Factors:</strong> {{ $order->fraud_note }}</p>
+            @endif
+        </div>
+
         @if ($total_parcel > 0)
             <div class="success-ratio">
                 <div class="progress" role="progressbar" aria-label="Progress example" aria-valuemin="0"
