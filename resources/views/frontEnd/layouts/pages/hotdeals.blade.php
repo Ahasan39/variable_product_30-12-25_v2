@@ -1,7 +1,7 @@
 @extends('frontEnd.layouts.master') 
 @section('title','Hot Deals')
 @push('css')
-<link rel="stylesheet" href="{{asset('public/frontEnd/css/jquery-ui.css')}}" />
+<link rel="stylesheet" href="{{asset('frontEnd/css/jquery-ui.css')}}" />
 @endpush 
 @section('content')
 <section class="product-section">
@@ -71,7 +71,7 @@
                             @endif
                             <div class="pro_img">
                                 <a href="{{ route('product',$value->slug) }}">
-                                    <img src="{{ asset($value->image ? $value->image->image : '') }}" alt="{{$value->name}}" />
+                                    <img loading="lazy" src="{{ asset($value->image ? $value->image->image : '') }}" alt="{{$value->name}}" />
                                 </a>
                               
                             </div>

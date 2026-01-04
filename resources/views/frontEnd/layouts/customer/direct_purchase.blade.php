@@ -29,7 +29,7 @@
 @extends('frontEnd.layouts.master')
 @section('title', 'Customer Checkout')
 @push('css')
-    <link rel="stylesheet" href="{{ asset('public/frontEnd/css/select2.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('frontEnd/css/select2.min.css') }}" />
 @endpush
 @section('content')
 <section class="chheckout-section">
@@ -240,8 +240,8 @@
 @endsection
 
 @push('script')
-<script src="{{ asset('public/frontEnd/js/parsley.min.js') }}"></script>
-<script src="{{ asset('public/frontEnd/js/select2.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/parsley.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/select2.min.js') }}"></script>
 <script>
     $(document).ready(function () {
     const subtotal = parseFloat(document.getElementById("subtotal_hidden").value);
@@ -254,8 +254,8 @@ $("#area").on("change", function () {
     $("#grand_total strong").text(subtotal + shipping);
 });
 // ==============
-<script src="{{ asset('public/frontEnd/js/parsley.min.js') }}"></script>
-<script src="{{ asset('public/frontEnd/js/select2.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/parsley.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/select2.min.js') }}"></script>
 <script>
     $(document).ready(function () {
         $('#division').on('change', function () {
@@ -271,9 +271,9 @@ $("#area").on("change", function () {
 </script>
 @endpush
 @push('script')
-<script src="{{ asset('public/frontEnd/') }}/js/parsley.min.js"></script>
-<script src="{{ asset('public/frontEnd/') }}/js/form-validation.init.js"></script>
-<script src="{{ asset('public/frontEnd/') }}/js/select2.min.js"></script>
+<script src="{{ asset('frontEnd/') }}/js/parsley.min.js"></script>
+<script src="{{ asset('frontEnd/') }}/js/form-validation.init.js"></script>
+<script src="{{ asset('frontEnd/') }}/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
         $(".select2").select2();

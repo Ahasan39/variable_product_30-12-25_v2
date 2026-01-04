@@ -7,7 +7,7 @@
                         </a>
                     </div>
                     <div class="menu-logo">
-                        <a href="{{route('home')}}"><img src="{{asset($generalsetting->white_logo)}}" alt="" /></a>
+                        <a href="{{route('home')}}"><img src="{{asset($generalsetting->white_logo)}}" alt="" width="150" height="40" /></a>
                     </div>
                     <div class="menu-bag">
                         <p class="margin-shopping">
@@ -36,7 +36,7 @@
                             <div class="col-sm-12">
                                 <div class="logo-header">
                                     <div class="main-logo">
-                                        <a href="{{route('home')}}"><img src="{{asset($generalsetting->white_logo)}}" alt="" /></a>
+                                        <a href="{{route('home')}}"><img src="{{asset($generalsetting->white_logo)}}" alt="" width="200" height="50" /></a>
                                     </div>
                                     <div class="main-search">
                                         <form action="{{route('search')}}">
@@ -91,7 +91,7 @@
                                                     <ul>
                                                         @foreach(Cart::instance('shopping')->content() as $key=>$value)
                                                         <li>
-                                                            <a href=""><img src="{{asset($value->options->image)}}" alt="" /></a>
+                                                            <a href=""><img src="{{asset($value->options->image)}}" alt="" loading="lazy" /></a>
                                                         </li>
                                                         <li><a href="">{{Str::limit($value->name, 30)}}</a></li>
                                                         <li>Qty: {{$value->qty}}</li>

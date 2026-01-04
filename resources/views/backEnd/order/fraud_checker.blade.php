@@ -15,7 +15,7 @@
         margin-top: 0 !important;
         font-size: 16px;
         margin-bottom: 25px;
-        padding-top: 15px;
+        padding-top: 15px; 
     }
 
     #fraud_checker_modal .modal-body {

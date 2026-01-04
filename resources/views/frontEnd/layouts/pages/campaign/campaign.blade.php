@@ -179,13 +179,13 @@
 
                             <div class="campro_img_slider owl-carousel">
                                <div class="campro_img_item">
-                                   <img src="{{asset($campaign_data->image_one)}}" alt="">
+                                   <img src="{{asset($campaign_data->image_one)}}" alt="" loading="lazy">
                                </div> 
                                <div class="campro_img_item">
-                                   <img src="{{asset($campaign_data->image_one)}}" alt="">
+                                   <img src="{{asset($campaign_data->image_one)}}" alt="" loading="lazy">
                                </div> 
                                <div class="campro_img_item">
-                                   <img src="{{asset($campaign_data->image_one)}}" alt="">
+                                   <img src="{{asset($campaign_data->image_one)}}" alt="" loading="lazy">
                                </div> 
                             </div>
                             <div class="col-sm-12">
@@ -234,7 +234,7 @@
                                   </div>
                                   <div class="why_choose_widget">
                                       <div class="why_img">
-                                          <img src="{{asset('public/frontEnd/campaign')}}/images/honey.png" alt="">
+                                          <img src="{{asset('public/frontEnd/campaign')}}/images/honey.png" alt="" loading="lazy">
                                       </div>
                                   </div>
                               </div>
@@ -253,7 +253,7 @@
                             <div class="review_slider owl-carousel">
                             @foreach($campaign_data->images as $key=>$value)
                             <div class="review_item">
-                                <img src="{{asset($value->image)}}" alt="">
+                                <img src="{{asset($value->image)}}" alt="" loading="lazy">
                             </div>
                             @endforeach
                            </div>

@@ -25,7 +25,7 @@
 @endpush
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('public/frontEnd/css/zoomsl.css') }}">
+<link rel="stylesheet" href="{{ asset('frontEnd/css/zoomsl.css') }}">
 @endpush
 
 @section('content')
@@ -56,7 +56,7 @@
                                 <div class="details_slider owl-carousel">
                                     @foreach ($details->images as $value)
                                         <div class="dimage_item">
-                                            <img src="{{ asset($value->image) }}" class="block__pic" />
+                                            <img src="{{ asset($value->image) }}" class="block__pic" @if(!$loop->first) loading="lazy" @endif />
                                         </div>
                                     @endforeach
                                 </div>
@@ -65,7 +65,7 @@
                                     class="indicator_thumb @if ($details->images->count() > 4) thumb_slider owl-carousel @endif">
                                     @foreach ($details->images as $key => $image)
                                         <div class="indicator-item" data-id="{{ $key }}">
-                                            <img src="{{ asset($image->image) }}" />
+                                            <img src="{{ asset($image->image) }}" loading="lazy" />
                                         </div>
                                     @endforeach
                                 </div>
@@ -162,7 +162,7 @@
                                                                                 style="background-color: {{ $procolor->color ? $procolor->color->color : '' }}"
                                                                                 class="selector-item_label">
                                                                                 <span>
-                                                                                    <img src="{{ asset('public/frontEnd/images') }}/check-icon.svg"
+                                                                                    <img src="{{ asset('frontEnd/images') }}/check-icon.svg"
                                                                                         alt="Checked Icon" />
                                                                                 </span>
                                                                             </label>
@@ -529,7 +529,7 @@
                                 @endif
                                 <div class="pro_img">
                                     <a href="{{ route('product', $value->slug) }}">
-                                        <img src="{{ asset($value->image ? $value->image->image : '') }}"
+                                        <img loading="lazy" src="{{ asset($value->image ? $value->image->image : '') }}"
                                             alt="{{ $value->name }}" />
                                     </a>
                                 </div>
@@ -579,9 +579,9 @@
 </script>
 
 @endsection @push('script')
-<script src="{{ asset('public/frontEnd/js/owl.carousel.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/owl.carousel.min.js') }}"></script>
 
-<script src="{{ asset('public/frontEnd/js/zoomsl.min.js') }}"></script>
+<script src="{{ asset('frontEnd/js/zoomsl.min.js') }}"></script>
 
 <script>
     $(document).ready(function() {

@@ -58,7 +58,7 @@
                     <div class="main_slider owl-carousel">
                         @foreach ($sliders as $key => $value)
                             <div class="slider-item">
-                                <img src="{{ asset($value->image) }}" alt="" />
+                                <img src="{{ asset($value->image) }}" alt="" @if(!$loop->first) loading="lazy" @endif @if($loop->first) fetchpriority="high" @endif width="1200" height="400" />
                             </div>
                             <!-- slider item -->
                         @endforeach
@@ -91,7 +91,7 @@
                         <div class="cat_item">
                             <div class="cat_img">
                                 <a href="{{ route('category', $value->slug) }}">
-                                    <img src="{{ asset($value->image) }}" alt="" />
+                                    <img loading="lazy" src="{{ asset($value->image) }}" alt="" />
                                 </a>
                             </div>
                             <div class="cat_name">
@@ -145,8 +145,8 @@
                                 @endif
                                 <div class="pro_img">
                                     <a href="{{ route('product', $value->slug) }}">
-                                        <img src="{{ asset($value->image ? $value->image->image : '') }}"
-                                            alt="{{ $value->name }}" />
+                                        <img loading="lazy" src="{{ asset($value->image ? $value->image->image : '') }}"
+                                            alt="{{ $value->name }}" width="200" height="200" />
                                     </a>
                                 </div>
                                 <div class="pro_des">
@@ -240,7 +240,7 @@
 
                                         <div class="pro_img">
                                             <a href="{{ route('product', $value->slug) }}">
-                                                <img src="{{ asset($value->image ? $value->image->image : '') }}" alt="{{ $value->name }}" />
+                                                <img loading="lazy" src="{{ asset($value->image ? $value->image->image : '') }}" alt="{{ $value->name }}" />
                                             </a>
                                         </div>
 

@@ -22,7 +22,7 @@
            <a class="cart_remove" data-id="{{$value->rowId}}"><i class="fas fa-trash text-danger"></i></a>
           </td>
           <td class="text-left">
-           <a href="{{route('product',$value->options->slug)}}"> <img src="{{asset($value->options->image)}}" style="height:30px;width:30px" /> {{Str::limit($value->name,20)}}</a>
+           <a href="{{route('product',$value->options->slug)}}"> <img src="{{asset($value->options->image)}}" style="height:30px;width:30px" loading="lazy" /> {{Str::limit($value->name,20)}}</a>
            @if($value->options->product_size)
             <p>Size: {{$value->options->product_size}}</p>
            @endif
@@ -65,7 +65,7 @@
         </tfoot>
        </table>
 
-<script src="{{asset('public/frontEnd/js/jquery-3.6.3.min.js')}}"></script>
+<script src="{{asset('frontEnd/js/jquery-3.6.3.min.js')}}"></script>
 <!-- cart js start -->
 <script>
     $('.cart_store').on('click',function(){

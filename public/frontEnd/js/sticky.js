@@ -1,12 +1,17 @@
 document.addEventListener("DOMContentLoaded", function(){
+  let ticking = false;
   window.addEventListener('scroll', function() {
-      if (window.scrollY > 450) {
-      	$('.sticky').addClass('fixed-top');
-        // navbar_height = document.querySelector('.navbar').offsetHeight;
-        // document.body.style.paddingTop = navbar_height + 'px';
-      } else {
-        $('.sticky').removeClass('fixed-top');
-        document.body.style.paddingTop = '0';
-      } 
-  });
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        if (window.scrollY > 450) {
+          $('.sticky').addClass('fixed-top');
+        } else {
+          $('.sticky').removeClass('fixed-top');
+          document.body.style.paddingTop = '0';
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
 });

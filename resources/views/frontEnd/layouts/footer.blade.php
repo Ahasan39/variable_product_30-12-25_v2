@@ -5,7 +5,7 @@
                         <div class="col-sm-4 mb-3 mb-sm-0">
                             <div class="footer-about">
                                 <a href="{{route('home')}}">
-                                    <img src="{{asset($generalsetting->white_logo)}}" alt="" />
+                                    <img src="{{asset($generalsetting->white_logo)}}" alt="" loading="lazy" />
                                 </a>
                                 <p>{{$contact->address}}</p>
                                 <a href="tel:{{$contact->hotline}}" class="footer-hotlint">{{$contact->hotline}}</a>
@@ -55,7 +55,7 @@
                                 <div class="d_app">
                                     <h2>Download App</h2>
                                     <a href="">
-                                        <img src="{{asset('public/frontEnd/images/app-download.png')}}" alt="" />
+                                        <img src="{{asset('public/frontEnd/images/app-download.png')}}" alt="" loading="lazy" />
                                     </a>
                                 </div>
                             </div>

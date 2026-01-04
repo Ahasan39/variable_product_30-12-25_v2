@@ -83,6 +83,7 @@ class FrontendController extends Controller
     {
 
         $products = Product::where(['status' => 1, 'topsale' => 1])
+            ->with('image')
             ->select('id', 'name','name_bn', 'slug', 'new_price', 'old_price')
             ->paginate(36);
         return view('frontEnd.layouts.pages.hotdeals', compact('products'));
@@ -92,6 +93,7 @@ class FrontendController extends Controller
     {
         $category = Category::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'category_id' => $category->id])
+            ->with('image')
             ->select('id', 'name', 'slug', 'new_price', 'old_price', 'category_id');
         $subcategories = Subcategory::where('category_id', $category->id)->get();
 
@@ -134,6 +136,7 @@ class FrontendController extends Controller
     {
         $subcategory = Subcategory::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'subcategory_id' => $subcategory->id])
+            ->with('image')
             ->select('id', 'name','name_bn', 'slug', 'new_price', 'old_price', 'category_id', 'subcategory_id');
         $childcategories = Childcategory::where('subcategory_id', $subcategory->id)->get();
 
@@ -207,7 +210,7 @@ class FrontendController extends Controller
 
         $childcategory = Childcategory::where(['slug' => $slug, 'status' => 1])->first();
         $childcategories = Childcategory::where('subcategory_id', $childcategory->subcategory_id)->get();
-        $products = Product::where(['status' => 1, 'childcategory_id' => $childcategory->id])->with('category')
+        $products = Product::where(['status' => 1, 'childcategory_id' => $childcategory->id])->with(['category', 'image'])
             ->select('id', 'name', 'slug', 'new_price', 'old_price', 'category_id', 'subcategory_id', 'childcategory_id');
 
 

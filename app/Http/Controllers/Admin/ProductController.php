@@ -66,380 +66,272 @@ class ProductController extends Controller
         $sizes = Size::where('status','1')->get();
         return view('backEnd.product.create',compact('categories','brands','colors','sizes'));
     }
-public function store(Request $request)
-{
-    $this->validate($request, [
-        'name' => 'required|string|max:255',
-        'category_id' => 'required|integer',
-        'new_price' => 'required|numeric',
-        'purchase_price' => 'required|numeric',
-        'description' => 'required|string',
-        'variants' => 'required|array|min:1',
-    ]);
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|integer',
+            'new_price' => 'required|numeric',
+            'purchase_price' => 'required|numeric',
+            'description' => 'required|string',
+            'variants' => 'required|array|min:1',
+        ]);
 
-    DB::beginTransaction();
-    try {
-        // Tags processing
-        $tagsString = $request->input('tags', '');
-        $tagsArray = $tagsString ? array_map('trim', explode(',', $tagsString)) : [];
-        $tagsJson = json_encode($tagsArray);
+        DB::beginTransaction();
+        try {
+            // Tags processing
+            $tagsString = $request->input('tags', '');
+            $tagsArray = $tagsString ? array_map('trim', explode(',', $tagsString)) : [];
+            $tagsJson = json_encode($tagsArray);
 
-        // Get last product ID
-        $last_id = Product::orderBy('id', 'desc')->select('id')->first();
-        $last_id = $last_id ? $last_id->id + 1 : 1;
+            // Get last product ID
+            $last_id = Product::orderBy('id', 'desc')->select('id')->first();
+            $last_id = $last_id ? $last_id->id + 1 : 1;
 
-        // Prepare product data (exclude variant and image related fields)
-        // 'sku' is for variants only, not for main product table
-        $input = $request->except(['image', 'files', 'proSize', 'proColor', 'sku', 'variants', 'color_images']);
-        
-        // Set required and optional fields
-        $input['slug'] = strtolower(preg_replace('/[\/\s]+/', '-', $request->name . '-' . $last_id));
-        $input['status'] = $request->status ? 1 : 0;
-        $input['topsale'] = $request->topsale ? 1 : 0;
-        $input['feature_product'] = $request->feature_product ? 1 : 0;
-        $input['product_code'] = $request->product_code ?? 'P' . str_pad($last_id, 4, '0', STR_PAD_LEFT);
-        $input['tags'] = $tagsJson;
-        $input['subcategory_id'] = $request->subcategory_id ?? 0;
-        $input['childcategory_id'] = $request->childcategory_id ?? null;
-        $input['stock'] = $request->stock ?? 0;
-
-        // Create product
-        $product = Product::create($input);
-
-        // Store color images separately (organized by color_id)
-       $colorImagesData = [];
-
-if ($request->has('color_images')) {
-
-    foreach ($request->file('color_images') as $colorId => $images) {
-
-        foreach ($images as $key => $image) {
-
-            if (!$image->isValid()) {
-                continue;
-            }
-
-            // ✅ Correct absolute path
-            $uploadDir = public_path('uploads/product');
-
-            if (!file_exists($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            $fileName = time() . "-{$colorId}-{$key}.webp";
-            $fullPath = $uploadDir . '/' . $fileName;
-
-            // 🔥 Convert & save
-            $this->convertToWebP(
-                $image->getRealPath(),
-                $fullPath,
-                80
-            );
-
-            // ✅ Save relative path for frontend
-            $colorImagesData[$colorId][] = 'uploads/product/' . $fileName;
-        }
-    }
-}
-
-        // Store product variants
-        $processedColors = [];
-        $variantCount = 0;
-        
-        foreach ($request->variants as $key => $variantData) {
-            // Debug log
-            \Log::info('Processing variant:', ['key' => $key, 'data' => $variantData]);
+            // Prepare product data (exclude variant and image related fields)
+            $input = $request->except(['image', 'files', 'proSize', 'proColor', 'sku', 'variants', 'color_images']);
             
-            // Skip if required fields are missing
-            if (!isset($variantData['color_id']) || !isset($variantData['size_id']) || !isset($variantData['price'])) {
-                \Log::warning('Skipping variant due to missing data:', ['key' => $key, 'data' => $variantData]);
-                continue;
-            }
+            // Set required and optional fields
+            $input['slug'] = strtolower(preg_replace('/[\/\s]+/', '-', $request->name . '-' . $last_id));
+            $input['status'] = $request->status ? 1 : 0;
+            $input['topsale'] = $request->topsale ? 1 : 0;
+            $input['feature_product'] = $request->feature_product ? 1 : 0;
+            $input['product_code'] = $request->product_code ?? 'P' . str_pad($last_id, 4, '0', STR_PAD_LEFT);
+            $input['tags'] = $tagsJson;
+            $input['subcategory_id'] = $request->subcategory_id ?? 0;
+            $input['childcategory_id'] = $request->childcategory_id ?? null;
+            $input['stock'] = $request->stock ?? 0;
 
-            // Validate that IDs are not empty
-            if (empty($variantData['color_id']) || empty($variantData['size_id'])) {
-                \Log::warning('Skipping variant due to empty IDs:', ['key' => $key, 'data' => $variantData]);
-                continue;
-            }
+            // Create product
+            $product = Product::create($input);
 
-            // Generate SKU if not provided
-            $sku = !empty($variantData['sku']) 
-                ? $variantData['sku'] 
-                : 'V' . str_pad($product->id, 4, '0', STR_PAD_LEFT) . '-' . $variantData['color_id'] . '-' . $variantData['size_id'];
+            // Store color images separately
+            $colorImagesData = [];
 
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'color_id' => $variantData['color_id'],
-                'size_id' => $variantData['size_id'],
-                'price' => $variantData['price'],
-                'stock' => $variantData['stock'] ?? 0,
-                'sku' => $sku,
-                'availability' => isset($variantData['availability']) ? true : false,
-            ]);
+            if ($request->has('color_images')) {
+                foreach ($request->file('color_images') as $colorId => $images) {
+                    foreach ($images as $key => $image) {
+                        if (!$image->isValid()) {
+                            continue;
+                        }
 
-            $variantCount++;
+                        // Use requested folder structure
+                        $uploadDir = public_path('uploads/products');
 
-            // Save images only once per color (avoid duplicate images for same color different sizes)
-            $colorId = $variantData['color_id'];
-            if (isset($colorImagesData[$colorId]) && !in_array($colorId, $processedColors)) {
-                foreach ($colorImagesData[$colorId] as $imagePath) {
-                    VariantImage::create([
-                        'product_variant_id' => $variant->id,
-                        'image_path' => $imagePath,
-                    ]);
+                        if (!file_exists($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+
+                        $fileName = time() . "-{$colorId}-{$key}.webp";
+                        $fullPath = $uploadDir . '/' . $fileName;
+
+                        // Use Intervention Image to resize and convert
+                        Image::make($image)
+                            ->resize(1200, null, function ($constraint) {
+                                $constraint->aspectRatio();
+                                $constraint->upsize();
+                            })
+                            ->encode('webp', 80)
+                            ->save($fullPath);
+
+                        // Save relative path
+                        $colorImagesData[$colorId][] = 'uploads/products/' . $fileName;
+                    }
                 }
-                $processedColors[] = $colorId;
             }
-        }
 
-        // Check if any variants were created
-        if ($variantCount === 0) {
+            // Store product variants
+            $processedColors = [];
+            $variantCount = 0;
+            
+            foreach ($request->variants as $key => $variantData) {
+                if (!isset($variantData['color_id']) || !isset($variantData['size_id']) || !isset($variantData['price'])) {
+                    continue;
+                }
+
+                if (empty($variantData['color_id']) || empty($variantData['size_id'])) {
+                    continue;
+                }
+
+                $sku = !empty($variantData['sku']) 
+                    ? $variantData['sku'] 
+                    : 'V' . str_pad($product->id, 4, '0', STR_PAD_LEFT) . '-' . $variantData['color_id'] . '-' . $variantData['size_id'];
+
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'color_id' => $variantData['color_id'],
+                    'size_id' => $variantData['size_id'],
+                    'price' => $variantData['price'],
+                    'stock' => $variantData['stock'] ?? 0,
+                    'sku' => $sku,
+                    'availability' => isset($variantData['availability']) ? true : false,
+                ]);
+
+                $variantCount++;
+
+                $colorId = $variantData['color_id'];
+                if (isset($colorImagesData[$colorId]) && !in_array($colorId, $processedColors)) {
+                    foreach ($colorImagesData[$colorId] as $imagePath) {
+                        VariantImage::create([
+                            'product_variant_id' => $variant->id,
+                            'image_path' => $imagePath,
+                        ]);
+                    }
+                    $processedColors[] = $colorId;
+                }
+            }
+
+            if ($variantCount === 0) {
+                DB::rollback();
+                Toastr::error('Error', 'No valid variants were created');
+                return redirect()->back()->withInput();
+            }
+
+            DB::commit();
+            Toastr::success('Success', 'Product created successfully with ' . $variantCount . ' variants');
+            return redirect()->route('products.index');
+
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('Error', 'No valid variants were created');
+            Toastr::error('Error', 'Failed to create product: ' . $e->getMessage());
             return redirect()->back()->withInput();
         }
-
-        DB::commit();
-        Toastr::success('Success', 'Product created successfully with ' . $variantCount . ' variants');
-        return redirect()->route('products.index');
-
-    } catch (\Exception $e) {
-        DB::rollback();
-        Toastr::error('Error', 'Failed to create product: ' . $e->getMessage());
-        return redirect()->back()->withInput();
     }
-}
 
-    
- 
-    
-   public function edit($id)
-{
-    $edit_data = Product::with(['images', 'variants.color', 'variants.size', 'variants.images'])->find($id);
-    $categories = Category::where('parent_id', '=', '0')->where('status', 1)->select('id', 'name', 'status')->get();
-    
-    $categoryId = $edit_data->category_id;
-    $subcategoryId = $edit_data->subcategory_id;
-    
-    $subcategory = Subcategory::where('category_id', '=', $categoryId)->select('id', 'subcategoryName', 'status')->get();
-    $childcategory = Childcategory::where('subcategory_id', '=', $subcategoryId)->select('id', 'childcategoryName', 'status')->get();
-    $brands = Brand::where('status', '1')->select('id', 'name', 'status')->get();
-    
-    // Get all colors and sizes for selection
-    $colors = Color::where('status', 1)->get();
-    $sizes = Size::where('status', 1)->get();
-        $totalsizes = Size::where('status',1)->get();
-        $totalcolors = Color::where('status',1)->get();
-        $selectcolors = Productcolor::where('product_id',$id)->get();
-        $selectsizes = Productsize::where('product_id',$id)->get();
-    // Get existing variants grouped by color
-    $existingVariants = $edit_data->variants->groupBy('color_id');
-    
-    return view('backEnd.product.edit', compact(
-        'edit_data', 
-        'categories', 
-        'subcategory', 
-        'childcategory', 
-        'brands', 
-        'colors', 
-        'sizes',
-        'existingVariants',
-         'selectcolors', 'selectsizes','totalsizes', 'totalcolors'
-    ));
-}
-
-    public function price_edit()
+    public function update(Request $request, $id)
     {
-        $products = DB::table('products')->select('id','name','status','old_price','new_price','stock')->where('status',1)->get();;
-        return view('backEnd.product.price_edit',compact('products'));
-    }
-    public function price_update(Request $request)
-{
-    $ids = $request->ids;
-    $oldPrices = $request->old_price;
-    $newPrices = $request->new_price;
-    $stocks = $request->stock;
-    foreach ($ids as $key => $id) {
-        $product = Product::select('id','name','status','old_price','new_price','stock')->find($id);
+        $this->validate($request, [
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|integer',
+            'new_price' => 'required|numeric',
+            'purchase_price' => 'required|numeric',
+            'description' => 'required|string',
+            'variants' => 'required|array|min:1',
+        ]);
 
-        if ($product) {
-            $product->update([
-                'old_price' => $oldPrices[$key],
-                'new_price' => $newPrices[$key],
-                'stock' => $stocks[$key],
-            ]);
-        }
-    }
-    Toastr::success('Success','Price update successfully');
-    return redirect()->back();
-}
-    
-  public function update(Request $request, $id)
-{
-    $this->validate($request, [
-        'name' => 'required|string|max:255',
-        'category_id' => 'required|integer',
-        'new_price' => 'required|numeric',
-        'purchase_price' => 'required|numeric',
-        'description' => 'required|string',
-        'variants' => 'required|array|min:1',
-    ]);
+        DB::beginTransaction();
+        try {
+            $product = Product::findOrFail($id);
 
-    DB::beginTransaction();
-    try {
-        $product = Product::findOrFail($id);
+            $tagsString = $request->input('tags', '');
+            $tagsArray = $tagsString ? array_map('trim', explode(',', $tagsString)) : [];
+            $tagsJson = json_encode($tagsArray);
 
-        // Tags processing
-        $tagsString = $request->input('tags', '');
-        $tagsArray = $tagsString ? array_map('trim', explode(',', $tagsString)) : [];
-        $tagsJson = json_encode($tagsArray);
+            $input = $request->except(['image', 'files', 'proSize', 'proColor', 'sku', 'variants', 'color_images', '_token', '_method']);
+            
+            $input['status'] = $request->status ? 1 : 0;
+            $input['topsale'] = $request->topsale ? 1 : 0;
+            $input['feature_product'] = $request->feature_product ? 1 : 0;
+            $input['tags'] = $tagsJson;
+            $input['subcategory_id'] = $request->subcategory_id ?? 0;
+            $input['childcategory_id'] = $request->childcategory_id ?? null;
 
-        // Prepare product data
-        $input = $request->except(['image', 'files', 'proSize', 'proColor', 'sku', 'variants', 'color_images', '_token', '_method']);
-        
-        $input['status'] = $request->status ? 1 : 0;
-        $input['topsale'] = $request->topsale ? 1 : 0;
-        $input['feature_product'] = $request->feature_product ? 1 : 0;
-        $input['tags'] = $tagsJson;
-        $input['subcategory_id'] = $request->subcategory_id ?? 0;
-        $input['childcategory_id'] = $request->childcategory_id ?? null;
+            $product->update($input);
 
-        // Update product
-        $product->update($input);
-
-        // Delete old variants and their images
-        foreach ($product->variants as $variant) {
-            // Delete variant images from storage
-            foreach ($variant->images as $variantImage) {
-                if (file_exists($variantImage->image_path)) {
-                    unlink($variantImage->image_path);
+            // Delete old variants and their images
+            foreach ($product->variants as $variant) {
+                foreach ($variant->images as $variantImage) {
+                    if (file_exists($variantImage->image_path)) {
+                        unlink($variantImage->image_path);
+                    }
+                    $variantImage->delete();
                 }
-                $variantImage->delete();
+                $variant->delete();
             }
-            $variant->delete();
-        }
 
-        // Store new color images
-        $colorImagesData = [];
+            // Store new color images
+            $colorImagesData = [];
 
-        if ($request->has('color_images') && $request->color_images) {
-            foreach ($request->color_images as $colorId => $images) {
-                if (!isset($colorImagesData[$colorId])) {
-                    $colorImagesData[$colorId] = [];
-                }
+            if ($request->has('color_images') && $request->color_images) {
+                foreach ($request->color_images as $colorId => $images) {
+                    if (!isset($colorImagesData[$colorId])) {
+                        $colorImagesData[$colorId] = [];
+                    }
 
-                if (is_array($images)) {
-                    foreach ($images as $key => $image) {
-                        if ($image && $image->isValid()) {
-                            $name = time() . '-' . $colorId . '-' . $key . '-' . pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
-                            $name = strtolower(preg_replace('/\s+/', '-', $name)) . '.webp';
-                            $uploadPath = 'public/uploads/product/';
+                    if (is_array($images)) {
+                        foreach ($images as $key => $image) {
+                            if ($image && $image->isValid()) {
+                                $name = time() . '-' . $colorId . '-' . $key . '-' . pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
+                                $name = strtolower(preg_replace('/\s+/', '-', $name)) . '.webp';
+                                $uploadPath = public_path('uploads/products/');
 
-                            if (!file_exists($uploadPath)) {
-                                mkdir($uploadPath, 0777, true);
+                                if (!file_exists($uploadPath)) {
+                                    mkdir($uploadPath, 0777, true);
+                                }
+
+                                $fullPath = $uploadPath . $name;
+                                Image::make($image)
+                                    ->resize(1200, null, function ($constraint) {
+                                        $constraint->aspectRatio();
+                                        $constraint->upsize();
+                                    })
+                                    ->encode('webp', 80)
+                                    ->save($fullPath);
+                                    
+                                $colorImagesData[$colorId][] = 'uploads/products/' . $name;
                             }
-
-                            $imageUrl = $uploadPath . $name;
-                            $this->convertToWebP($image->getRealPath(), $imageUrl, 80);
-                            $colorImagesData[$colorId][] = $imageUrl;
                         }
                     }
                 }
             }
-        }
 
-        // Store new variants
-        $processedColors = [];
-        $variantCount = 0;
-        
-        foreach ($request->variants as $key => $variantData) {
-            // Skip if required fields are missing
-            if (!isset($variantData['color_id']) || !isset($variantData['size_id']) || !isset($variantData['price'])) {
-                continue;
-            }
-
-            // Validate that IDs are not empty
-            if (empty($variantData['color_id']) || empty($variantData['size_id'])) {
-                continue;
-            }
-
-            // Generate SKU if not provided
-            $sku = !empty($variantData['sku']) 
-                ? $variantData['sku'] 
-                : 'V' . str_pad($product->id, 4, '0', STR_PAD_LEFT) . '-' . $variantData['color_id'] . '-' . $variantData['size_id'];
-
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'color_id' => $variantData['color_id'],
-                'size_id' => $variantData['size_id'],
-                'price' => $variantData['price'],
-                'stock' => $variantData['stock'] ?? 0,
-                'sku' => $sku,
-                'availability' => isset($variantData['availability']) ? true : false,
-            ]);
-
-            $variantCount++;
-
-            // Save images only once per color
-            $colorId = $variantData['color_id'];
-            if (isset($colorImagesData[$colorId]) && !in_array($colorId, $processedColors)) {
-                foreach ($colorImagesData[$colorId] as $imagePath) {
-                    VariantImage::create([
-                        'product_variant_id' => $variant->id,
-                        'image_path' => $imagePath,
-                    ]);
+            // Store new variants
+            $processedColors = [];
+            $variantCount = 0;
+            
+            foreach ($request->variants as $key => $variantData) {
+                if (!isset($variantData['color_id']) || !isset($variantData['size_id']) || !isset($variantData['price'])) {
+                    continue;
                 }
-                $processedColors[] = $colorId;
-            }
-        }
 
-        // Check if any variants were created
-        if ($variantCount === 0) {
+                if (empty($variantData['color_id']) || empty($variantData['size_id'])) {
+                    continue;
+                }
+
+                $sku = !empty($variantData['sku']) 
+                    ? $variantData['sku'] 
+                    : 'V' . str_pad($product->id, 4, '0', STR_PAD_LEFT) . '-' . $variantData['color_id'] . '-' . $variantData['size_id'];
+
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'color_id' => $variantData['color_id'],
+                    'size_id' => $variantData['size_id'],
+                    'price' => $variantData['price'],
+                    'stock' => $variantData['stock'] ?? 0,
+                    'sku' => $sku,
+                    'availability' => isset($variantData['availability']) ? true : false,
+                ]);
+
+                $variantCount++;
+
+                $colorId = $variantData['color_id'];
+                if (isset($colorImagesData[$colorId]) && !in_array($colorId, $processedColors)) {
+                    foreach ($colorImagesData[$colorId] as $imagePath) {
+                        VariantImage::create([
+                            'product_variant_id' => $variant->id,
+                            'image_path' => $imagePath,
+                        ]);
+                    }
+                    $processedColors[] = $colorId;
+                }
+            }
+
+            if ($variantCount === 0) {
+                DB::rollback();
+                Toastr::error('Error', 'No valid variants were created');
+                return redirect()->back()->withInput();
+            }
+
+            DB::commit();
+            Toastr::success('Success', 'Product updated successfully with ' . $variantCount . ' variants');
+            return redirect()->route('products.index');
+
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('Error', 'No valid variants were created');
+            Toastr::error('Error', 'Failed to update product: ' . $e->getMessage());
             return redirect()->back()->withInput();
         }
-
-        DB::commit();
-        Toastr::success('Success', 'Product updated successfully with ' . $variantCount . ' variants');
-        return redirect()->route('products.index');
-
-    } catch (\Exception $e) {
-        DB::rollback();
-        Toastr::error('Error', 'Failed to update product: ' . $e->getMessage());
-        return redirect()->back()->withInput();
     }
-}
-
-// Helper function for WebP conversion 
-private function convertToWebP($source, $destination, $quality = 80)
-{
-    $image = imagecreatefromstring(file_get_contents($source));
-    
-    if ($image !== false) {
-        // Get original dimensions
-        $width = imagesx($image);
-        $height = imagesy($image);
-        
-        // Resize if too large
-        $maxWidth = 1920;
-        if ($width > $maxWidth) {
-            $newWidth = $maxWidth;
-            $newHeight = ($height / $width) * $newWidth;
-            $resized = imagecreatetruecolor($newWidth, $newHeight);
-            imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            imagewebp($resized, $destination, $quality);
-            imagedestroy($resized);
-        } else {
-            imagewebp($image, $destination, $quality);
-        }
-        
-        imagedestroy($image);
-        return true;
-    }
-    
-    return false;
-}
  
     public function inactive(Request $request)
     {

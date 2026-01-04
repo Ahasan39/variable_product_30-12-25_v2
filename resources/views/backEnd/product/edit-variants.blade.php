@@ -240,7 +240,7 @@ if (existingVariants[colorId]?.[0]?.images?.length) {
                 <div class="image-preview-item">
                     <span class="image-remove-btn"
                         onclick="removeOldImage(this, '${img.id}')">×</span>
-                    <img src="{{ asset('public/') }}${img.image_path}">
+                    <img src="{{ asset('') }}${img.image_path}">
                 </div>
             `).join('')}
         </div>

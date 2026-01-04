@@ -13,20 +13,20 @@
         <link rel="canonical" href="" />
         @stack('seo') 
         @stack('css')
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/bootstrap.min.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/animate.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/all.min.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/owl.carousel.min.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/owl.theme.default.min.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/mobile-menu.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/select2.min.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/bootstrap.min.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/animate.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/all.min.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/owl.carousel.min.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/owl.theme.default.min.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/mobile-menu.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/select2.min.css')}}" />
         <!-- toastr css -->
-        <link rel="stylesheet" href="{{asset('public/backEnd/')}}/assets/css/toastr.min.css" />
+        <link rel="stylesheet" href="{{asset('backEnd/assets/css/toastr.min.css')}}" />
 
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/wsit-menu.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/style.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/responsive.css')}}" />
-        <link rel="stylesheet" href="{{asset('public/frontEnd/css/main.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/wsit-menu.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/style.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/responsive.css')}}" />
+        <link rel="stylesheet" href="{{asset('frontEnd/css/main.css')}}" />
 
         <meta name="facebook-domain-verification" content="38f1w8335btoklo88dyfl63ba3st2e" />
 
@@ -438,8 +438,8 @@
         });
     }
 
-    // প্রতি 3 সেকেন্ডে মেসেজ রিফ্রেশ
-    setInterval(fetchMessages, 3000);
+    // Refresh messages every 15 seconds to save resources
+    setInterval(fetchMessages, 15000);
 
     // ইউজার যখন নাম/ইমেইল দেয়, তখন মেসেজ ফেচ করো
     document.getElementById('guest-email').addEventListener('blur', fetchMessages);
@@ -456,7 +456,7 @@
         <div class="mobile-menu">
                 <div class="mobile-menu-logo">
                     <div class="logo-image">
-                        <img src="{{asset($generalsetting->white_logo)}}" alt="" />
+                        <img src="{{asset($generalsetting->white_logo)}}" alt="" width="150" height="40" />
                     </div>
                     <div class="mobile-menu-close">
                         <i class="fa fa-times"></i>
@@ -466,7 +466,7 @@
                     @foreach($menucategories as $scategory)
                     <li class="parent-category">
                         <a href="{{url('category/'.$scategory->slug)}}" class="menu-category-name">
-                            <img src="{{asset($scategory->image)}}" alt="" class="side_cat_img" />
+                            <img src="{{asset($scategory->image)}}" alt="" class="side_cat_img" loading="lazy" />
                             {{$scategory->name}}
                         </a>
                         @if($scategory->subcategories->count() > 0)
@@ -516,13 +516,13 @@
         <div id="page-overlay"></div>
         <div id="loading"><div class="custom-loader"></div></div>
 
-        <script src="{{asset('public/frontEnd/js/jquery-3.6.3.min.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/bootstrap.min.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/owl.carousel.min.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/mobile-menu.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/wsit-menu.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/mobile-menu-init.js')}}"></script>
-        <script src="{{asset('public/frontEnd/js/wow.min.js')}}"></script>
+        <script src="{{asset('frontEnd/js/jquery-3.6.3.min.js')}}"></script>
+        <script src="{{asset('frontEnd/js/bootstrap.min.js')}}"></script>
+        <script src="{{asset('frontEnd/js/owl.carousel.min.js')}}"></script>
+        <script src="{{asset('frontEnd/js/mobile-menu.js')}}"></script>
+        <script src="{{asset('frontEnd/js/wsit-menu.js')}}"></script>
+        <script src="{{asset('frontEnd/js/mobile-menu-init.js')}}"></script>
+        <script src="{{asset('frontEnd/js/wow.min.js')}}"></script>
         <script>
             new WOW().init();
         </script>
@@ -537,7 +537,7 @@
         <script>
             feather.replace();
         </script>
-        <script src="{{asset('public/backEnd/')}}/assets/js/toastr.min.js"></script>
+        <script src="{{asset('backEnd/assets/js/toastr.min.js')}}"></script>
         {!! Toastr::message() !!} @stack('script')
         <script>
             $(".quick_view").on("click", function () {
@@ -689,36 +689,30 @@
         </script>
         <!-- cart js end -->
         <script>
-            $(".search_click").on("keyup change", function () {
-                var keyword = $(".search_keyword").val();
-                $.ajax({
-                    type: "GET",
-                    data: { keyword: keyword },
-                    url: "{{route('livesearch')}}",
-                    success: function (products) {
-                        if (products) {
-                            $(".search_result").html(products);
-                        } else {
-                            $(".search_result").empty();
-                        }
-                    },
-                });
-            });
-            $(".msearch_click").on("keyup change", function () {
-                var keyword = $(".msearch_keyword").val();
-                $.ajax({
-                    type: "GET",
-                    data: { keyword: keyword },
-                    url: "{{route('livesearch')}}",
-                    success: function (products) {
-                        if (products) {
-                            $("#loading").hide();
-                            $(".search_result").html(products);
-                        } else {
-                            $(".search_result").empty();
-                        }
-                    },
-                });
+            let searchTimeout;
+            $(".search_click, .msearch_click").on("keyup change", function () {
+                var searchInput = $(this);
+                var keyword = searchInput.val();
+                
+                clearTimeout(searchTimeout);
+                
+                searchTimeout = setTimeout(function() {
+                    $.ajax({
+                        type: "GET",
+                        data: { keyword: keyword },
+                        url: "{{route('livesearch')}}",
+                        success: function (products) {
+                            if (products) {
+                                if(searchInput.hasClass('msearch_click')) {
+                                     $("#loading").hide();
+                                }
+                                $(".search_result").html(products);
+                            } else {
+                                $(".search_result").empty();
+                            }
+                        },
+                    });
+                }, 300); // Debounce delay 300ms
             });
         </script>
         <!-- search js start -->
@@ -746,9 +740,20 @@
             });
         </script>
         <script>
-            $(".toggle").on("click", function () {
-                $("#page-overlay").show();
-                $(".mobile-menu").addClass("active");
+            $('.toggle').on('click', function(e) {
+                e.preventDefault();
+                requestAnimationFrame(() => {
+                    $('.mobile-menu').addClass('active');
+                    $("#page-overlay").show();
+                });
+            });
+
+            $('.mobile-menu-close, .mobile-menu-overlay').on('click', function(e) {
+                e.preventDefault();
+                requestAnimationFrame(() => {
+                    $('.mobile-menu').removeClass('active');
+                    $("#page-overlay").hide();
+                });
             });
 
             $("#page-overlay").on("click", function () {
@@ -766,6 +771,26 @@
                 $("#page-overlay").show();
                 $(".feature-products").addClass("active");
             });
+
+            $('.menu-category-link').on('click', function(e){
+                // Allow default link behavior
+            });
+
+            // Optimized toggle handler
+            function handleToggle(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $this = $(this);
+                // Use requestAnimationFrame for visual updates
+                requestAnimationFrame(() => {
+                   $this.toggleClass('active');
+                   // Toggle class on parent for CSS-driven visibility
+                   $this.parent().toggleClass('open'); 
+                });
+            }
+
+            $('.menu-category-toggle').on('click', handleToggle);
+            $('.menu-subcategory-toggle').on('click', handleToggle);
         </script>
         <script>
             $(document).ready(function () {

@@ -8,16 +8,16 @@
         <meta content="Coderthemes" name="author" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="{{asset('public/backEnd/')}}/assets/images/favicon.ico">
+        <link rel="shortcut icon" href="{{asset('backEnd/')}}/assets/images/favicon.ico">
 
         <!-- Bootstrap css -->
-        <link href="{{asset('public/backEnd/')}}/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+        <link href="{{asset('backEnd/')}}/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
         <!-- App css -->
-        <link href="{{asset('public/backEnd/')}}/assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
+        <link href="{{asset('backEnd/')}}/assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
         <!-- icons -->
-        <link href="{{asset('public/backEnd/')}}/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <link href="{{asset('backEnd/')}}/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
         <!-- Head js -->
-        <script src="{{asset('public/backEnd/')}}/assets/js/head.js"></script>
+        <script src="{{asset('backEnd/')}}/assets/js/head.js"></script>
 
     </head>
 
@@ -35,13 +35,13 @@
                                     <div class="auth-logo">
                                         <a href="index.html" class="logo logo-dark text-center">
                                             <span class="logo-lg">
-                                                <img src="{{asset('public/backEnd/')}}/assets/images/logo-dark.png" alt="" height="22">
+                                                <img src="{{asset('backEnd/')}}/assets/images/logo-dark.png" alt="" height="22">
                                             </span>
                                         </a>
                     
                                         <a href="" class="logo logo-light text-center">
                                             <span class="logo-lg">
-                                                <img src="{{asset('public/backEnd/')}}/assets/images/logo-light.png" alt="" height="22">
+                                                <img src="{{asset('backEnd/')}}/assets/images/logo-light.png" alt="" height="22">
                                             </span>
                                         </a>
                                     </div>
@@ -92,10 +92,10 @@
         <!-- end page -->
 
         <!-- Vendor js -->
-        <script src="{{asset('public/backEnd/')}}/assets/js/vendor.min.js"></script>
+        <script src="{{asset('backEnd/')}}/assets/js/vendor.min.js"></script>
 
         <!-- App js -->
-        <script src="{{asset('public/backEnd/')}}/assets/js/app.min.js"></script>
+        <script src="{{asset('backEnd/')}}/assets/js/app.min.js"></script>
         
     </body>
 </html>

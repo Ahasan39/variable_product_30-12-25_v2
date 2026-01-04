@@ -140,6 +140,20 @@ svg {
     max-width: 1200px;
 }
 
+.home-slider-container {
+    min-height: 400px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 1200 / 400;
+}
+
+@media (max-width: 767px) {
+    .home-slider-container {
+        min-height: auto;
+        aspect-ratio: 1200 / 400;
+    }
+}
+
 .container {
     max-width: 1380px;
 }
@@ -272,6 +286,13 @@ li.Newsletter i {
     display: grid;
     grid-template-columns: 18% 52% 30%;
     grid-gap: 0;
+    height: 50px;
+    align-items: center;
+}
+
+.main-logo {
+    height: 50px;
+    overflow: hidden;
 }
 
 /*search*/
@@ -279,9 +300,11 @@ li.Newsletter i {
     margin: 8px 0;
     position: relative;
 }
+
 .search_result {
     position: relative;
 }
+
 .search_product {
     position: absolute;
     width: 100%;
@@ -639,12 +662,14 @@ li.Newsletter i {
     opacity: 1;
     visibility: visible;
 }
+
 .cshort-summary ul li p {
     font-size: 15px;
     font-weight: 600;
     display: block;
     text-align: left;
 }
+
 .cshort-summary img {
     width: 45px;
     height: 45px;
@@ -1232,6 +1257,7 @@ section.slider-section {
     margin: 8px 0 !important;
     display: block;
 }
+
 .footer-bottom {
     background: #00657c;
     padding: 10px 0;
@@ -1249,6 +1275,7 @@ section.slider-section {
     text-align: center;
     color: #fff;
 }
+
 /*==== FOOTER CSS END ====  */
 
 /*==== FOOTER FIXED MENU START ====  */
@@ -1714,9 +1741,11 @@ button.details-review-button {
     font-size: 14px;
     font-weight: 600;
 }
+
 .subcategory-filter-list p {
     color: #555;
 }
+
 .subcategory-filter-label:hover {
     background-color: #00657c38;
 }
@@ -1791,6 +1820,7 @@ html .ui-button.ui-state-disabled:active {
 .slider-box {
     padding: 10px 25px;
 }
+
 /*====  CATEGORY CSS END ====  */
 
 /*====  QUICK VIEW CSS START ====  */
@@ -2029,7 +2059,8 @@ li.recent_pro {
     font-size: 15px;
 }
 
-.remove-cart, .remove-cart:focus {
+.remove-cart,
+.remove-cart:focus {
     background: #e20c15;
     border-radius: 50px;
     height: 30px;
@@ -2091,6 +2122,7 @@ li.recent_pro {
     border-bottom: 1px solid #ddd;
     padding-bottom: 5px;
 }
+
 .cshort-summary p strong {
     font-size: 15px;
     display: block;
@@ -2334,15 +2366,17 @@ li.recent_pro {
 }
 
 /*====  CHECKOUT CSS START ====  */
-.cartlist img{
-    height:30px;
-    width:30px;
+.cartlist img {
+    height: 30px;
+    width: 30px;
 }
-.cartlist span{
-    height:20px;
-    width:20px;
-    border-radius:50px;
+
+.cartlist span {
+    height: 20px;
+    width: 20px;
+    border-radius: 50px;
 }
+
 .chheckout-section {
     padding: 35px 0;
 }
@@ -2352,15 +2386,18 @@ li.recent_pro {
     padding: 15px 15px;
 }
 
-.checkout-shipping h5, .cart_details h5 {
+.checkout-shipping h5,
+.cart_details h5 {
     font-size: 16px;
     text-transform: uppercase;
     font-weight: 600;
     color: #000;
 }
+
 .cartlist .text-left {
     text-align: left;
 }
+
 .checkout-shipping label {
     margin-bottom: 5px;
     font-size: 17px;
@@ -2373,9 +2410,11 @@ li.recent_pro {
     color: #000;
     text-align: center;
 }
-.checkout-shipping h6 a{
-   color: #00657c; 
+
+.checkout-shipping h6 a {
+    color: #00657c;
 }
+
 .checkout-shipping select {
     font-size: 14px;
 }
@@ -2401,9 +2440,11 @@ li.recent_pro {
 .select2-results li {
     display: block;
 }
+
 .checkout-shipping .form-check-input {
     height: 14px !important;
 }
+
 .nagadform p,
 .bkashform p,
 .rocketform p {
@@ -2479,9 +2520,11 @@ li.recent_pro {
 /*====  CONTACT CSS END ====  */
 
 /*====  ALL CATEGORY CSS START ====  */
-.filter_btn, .filter_close {
+.filter_btn,
+.filter_close {
     display: none;
 }
+
 .category-thumb {
     background: #f1f1f1;
     text-align: center;
@@ -2999,6 +3042,7 @@ section.product-inner {
 .product_item_inner:hover .pro_img img {
     transform: scale(1.1);
 }
+
 .product_item:hover {
     border-color: #00657c !important;
 }
@@ -3021,11 +3065,13 @@ section.product-inner {
 .pro_btn form {
     text-align: center;
 }
+
 .pro_btn {
     display: grid;
     grid-template-columns: 1fr;
     grid-gap: 4px;
 }
+
 .pro_btn button {
     background: #00657c;
     color: #fff;
@@ -3720,6 +3766,7 @@ ul.social_link {
     cursor: pointer;
     border: 1px solid #ddd;
 }
+
 .selector-item label {
     border: 1px solid #7D7D7D;
 }
@@ -3997,6 +4044,14 @@ ul.child-category {
 .cat_img {
     height: 210px;
     margin: 0 auto;
+    aspect-ratio: 1 / 1;
+}
+
+.cat_img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
 }
 
 .cat_name {
@@ -4011,6 +4066,7 @@ ul.child-category {
     transition: 0.35s all;
     border-radius: 10px;
 }
+
 .cat_item:hover {
     border-color: #00657c;
 }
@@ -4211,27 +4267,30 @@ td.tfoot_bg {
 
 
 .payment-methods .form-check {
-    display:inline-block !important;
+    display: inline-block !important;
 }
+
 .payment-methods label {
     font-size: 15px;
     color: #555;
     margin-right: 10px;
 }
+
 .product-details-discount-badge {
     position: absolute;
     right: 20px;
     top: 10px;
     z-index: 999;
 }
-.product-details-discount-badge {
-    
-}
-.product-details-discount-badge span.sale-badge-text p {     
+
+.product-details-discount-badge {}
+
+.product-details-discount-badge span.sale-badge-text p {
     font-size: 11px;
     color: #fff;
     line-height: 10px;
 }
+
 .product-details-discount-badge span.sale-badge-text {
     background-color: #e82165;
     border-radius: 50%;
@@ -4243,44 +4302,53 @@ td.tfoot_bg {
     justify-content: center;
     flex-direction: column;
     color: #fff;
-    
+
 }
+
 .details-ratting-wrapper {
     margin-bottom: 10px;
 }
+
 .details-ratting-wrapper i {
     color: #FFDF00;
 }
+
 .details-ratting-wrapper i.far.fa-star {
     color: #959595;
 }
-.all-reviews-button  {
+
+.all-reviews-button {
     text-decoration: underline;
     margin-left: 20px;
 }
+
 .customer-sidebar {
     background-color: #f5f7f9;
     padding: 10px;
     height: 100%;
 }
+
 .topcategory {
     display: grid;
-    grid-template-columns: repeat(5,1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-gap: 10px;
 }
+
 .product_sliders {
     display: grid;
-    grid-template-columns: repeat(6,1fr);
+    grid-template-columns: repeat(6, 1fr);
     grid-gap: 15px;
 }
+
 .show_more_btn a.view_more_btn {
     float: inherit;
 }
+
 .show_more_btn a.view_more_btn {
     float: inherit;
 }
+
 .show_more_btn {
     text-align: center;
     margin-bottom: 12px;
 }
-
