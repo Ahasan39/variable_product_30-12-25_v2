@@ -86,7 +86,12 @@
                                      <!-- <a href="{{route('products.edit',$value->id)}}" title="Copy"><i class="fe-copy"></i></a> -->
                                 </div>
                             </td>
-                            <td>{{$value->product_code}}</td>
+                            <td>
+                                {{$value->product_code}}<br>
+                                @foreach($value->variants as $variant)
+                                <span class="badge bg-soft-primary text-primary">{{$variant->sku}} @if($variant->color)({{$variant->color->colorName}})@endif @if($variant->size)({{$variant->size->sizeName}})@endif</span>
+                                @endforeach
+                            </td>
                             <td>{{$value->name}}</td>
                             <td>{{$value->category?$value->category->name:''}}</td>
                             <td><img src="{{asset($value->image?$value->image->image:'')}}" class="backend-image" alt=""></td>

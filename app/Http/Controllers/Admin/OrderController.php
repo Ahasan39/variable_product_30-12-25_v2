@@ -49,30 +49,31 @@ class OrderController extends Controller
                 'orders_count'=> Order::count(),
             ];
             $show_data = Order::latest()->with('shipping','status','orderdetails','order_status');
-            if($request->keyword){
-                $show_data = $show_data->where(function ($query) use ($request) {
-                    $keyword = $request->keyword;
-                    $query->orWhere('invoice_id', 'LIKE', '%' . $keyword . '%')
-                          ->orWhereHas('shipping', function ($subQuery) use ($keyword) {
-                              $subQuery->where('phone', 'LIKE', '%' . $keyword . '%')
-                                       ->orWhere('name', 'LIKE', '%' . $keyword . '%');
-                          })
-                          ->orWhereHas('orderdetails', function ($odQuery) use ($keyword) {
-                              $odQuery->where('product_name', 'LIKE', '%' . $keyword . '%')
-                                      ->orWhereHas('product', function ($pQuery) use ($keyword) {
-                                          $pQuery->where('product_code', 'LIKE', '%' . $keyword . '%')
-                                                 ->orWhereHas('variants', function ($vQuery) use ($keyword) {
-                                                     $vQuery->where('sku', 'LIKE', '%' . $keyword . '%');
-                                                 });
-                                      });
-                          });
-                });
-            }
-           $show_data = $show_data->paginate(10);
         }else{
             $order_status = OrderStatus::where('slug',$slug)->withCount('orders')->first();
-            $show_data = Order::where(['order_status'=>$order_status->id])->latest()->with('shipping','status')->paginate(10);
+            $show_data = Order::where(['order_status'=>$order_status->id])->latest()->with('shipping','status','orderdetails','order_status');
         }
+
+        if($request->keyword){
+            $show_data = $show_data->where(function ($query) use ($request) {
+                $keyword = $request->keyword;
+                $query->orWhere('invoice_id', 'LIKE', '%' . $keyword . '%')
+                        ->orWhereHas('shipping', function ($subQuery) use ($keyword) {
+                            $subQuery->where('phone', 'LIKE', '%' . $keyword . '%')
+                                    ->orWhere('name', 'LIKE', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('orderdetails', function ($odQuery) use ($keyword) {
+                            $odQuery->where('product_name', 'LIKE', '%' . $keyword . '%')
+                                    ->orWhereHas('product', function ($pQuery) use ($keyword) {
+                                        $pQuery->where('product_code', 'LIKE', '%' . $keyword . '%')
+                                                ->orWhereHas('variants', function ($vQuery) use ($keyword) {
+                                                    $vQuery->where('sku', 'LIKE', '%' . $keyword . '%');
+                                                });
+                                    });
+                        });
+            });
+        }
+        $show_data = $show_data->paginate(20);
         $users = User::get();
         $steadfast = Courierapi::where(['status'=>1, 'type'=>'steadfast'])->first();
         $pathao_info = Courierapi::where(['status'=>1, 'type'=>'pathao'])->select('id', 'type', 'url', 'token', 'status')->first();
@@ -409,8 +410,8 @@ public function bulk_courier($slug, Request $request)
     
     
     public function stock_report(Request $request){
-        $products = Product::select('id', 'name','new_price','stock')
-            ->where('status', 1);
+        $products = Product::select('id', 'name','new_price','stock','product_code')
+            ->where('status', 1)->with('variants.color', 'variants.size');
         if ($request->keyword) {
             $keyword = $request->keyword;
             $products = $products->where(function ($q) use ($keyword) {
@@ -473,7 +474,7 @@ public function bulk_courier($slug, Request $request)
     }
 
     public function order_create(){
-        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants')->get();
+        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants.color', 'variants.size')->get();
         $cartinfo  = Cart::instance('pos_shopping')->content();
         $shippingcharge = ShippingCharge::where('status',1)->get();
         return view('backEnd.order.create',compact('products','cartinfo','shippingcharge'));
@@ -725,7 +726,7 @@ public function bulk_courier($slug, Request $request)
         return redirect()->back();
     }
     public function order_edit($invoice_id){
-        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants')->get();
+        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants.color', 'variants.size')->get();
         $shippingcharge = ShippingCharge::where('status',1)->get();
         $order = Order::where('invoice_id',$invoice_id)->first();
         $cartinfo  = Cart::instance('pos_shopping')->destroy();

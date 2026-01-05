@@ -35,7 +35,10 @@
                                         <optgroup>
                                             <option value="">Select..</option>
                                             @foreach ($products as $value)
-                                                <option value="{{ $value->id }}">{{ $value->name }}</option>
+                                                <option value="{{ $value->id }}">{{ $value->name }} - {{ $value->product_code }} @if ($value->variants->count() > 0)
+                                @foreach ($value->variants as $variant) (SKU:{{$variant->sku}} @if($variant->color)-{{$variant->color->colorName}}@endif @if($variant->size)-{{$variant->size->sizeName}}@endif) @endforeach
+                                                    @endif
+                                                </option>
                                             @endforeach
                                         </optgroup>
                                     </select>

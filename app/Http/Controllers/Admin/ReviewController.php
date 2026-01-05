@@ -25,7 +25,7 @@ class ReviewController extends Controller
     }
     public function create()
     {
-        $products = Product::where(['status'=>1])->select('id','name')->get();
+        $products = Product::where(['status'=>1])->select('id','name','product_code')->with('variants.color', 'variants.size')->get();
         $customers = Customer::where('status', 'active')->get();
         return view('backEnd.review.create',compact('products', 'customers'));
     }
@@ -51,7 +51,7 @@ class ReviewController extends Controller
     public function edit($id)
     {
         $edit_data = Review::find($id);
-        $products = Product::where(['status'=>1])->select('id','name')->get();
+        $products = Product::where(['status'=>1])->select('id','name','product_code')->with('variants.color', 'variants.size')->get();
         return view('backEnd.review.edit',compact('edit_data','products'));
     }
     

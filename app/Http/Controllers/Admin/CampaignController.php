@@ -21,7 +21,7 @@ class CampaignController extends Controller
     }
     public function create()
     {
-        $products = Product::where(['status'=>1])->select('id','name','status','product_code')->with('variants')->get();
+        $products = Product::where(['status'=>1])->select('id','name','status','product_code')->with('variants.color', 'variants.size')->get();
         return view('backEnd.campaign.create',compact('products'));
     }
 public function store(Request $request)
@@ -124,7 +124,7 @@ public function store(Request $request)
         $edit_data = Campaign::with('images')->find($id);
         $select_products = Product::where('campaign_id',$id)->get();
         $show_data = Campaign::orderBy('id','DESC')->get();
-        $products = Product::where(['status'=>1])->select('id','name','status','product_code')->with('variants')->get();
+        $products = Product::where(['status'=>1])->select('id','name','status','product_code')->with('variants.color', 'variants.size')->get();
         return view('backEnd.campaign.edit',compact('edit_data','products','select_products'));
     }
     

@@ -106,7 +106,8 @@
                     <thead>
                         <tr>
                             <th style="width:5%">SL</th>
-                            <th style="width:30%">Product Name</th>
+                            <th style="width:10%">SKU</th>
+                            <th style="width:20%">Product Name</th>
                             <th style="width:10%">Price</th>
                             <th style="width:10%">Stock</th>
                             <th style="width:10%">Total</th>
@@ -121,6 +122,12 @@
                         @foreach($products as $key=>$value)
                         <tr>
                             <td>{{$loop->iteration}}</td>
+                            <td>
+                                {{$value->product_code}}<br>
+                                @foreach($value->variants as $variant)
+                                <span class="badge bg-soft-primary text-primary">{{$variant->sku}} @if($variant->color)({{$variant->color->colorName}})@endif @if($variant->size)({{$variant->size->sizeName}})@endif</span>
+                                @endforeach
+                            </td>
                             <td>{{$value->name}}</td>
                             <td>{{$value->new_price}}</td>
                             <td>{{$value->stock}}</td>
@@ -134,7 +141,7 @@
                      </tbody>
                      <tfoot>
                              <tr>
-                                 <td colspan="3" class="text-end"><strong>Total</strong></td>
+                                 <td colspan="4" class="text-end"><strong>Total</strong></td>
                                  <td><strong>{{$stock}} Pcs</strong></td>
                                  <td><strong>{{$total}} Tk</strong></td>
                              </tr>
