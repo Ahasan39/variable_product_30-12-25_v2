@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
 
     protected $guarded = [];
-    public function getRouteKeyName() {
+    public function getRouteKeyName() { 
         return 'slug';
     }
     
@@ -80,8 +80,13 @@ class Product extends Model
     {
         return $this->hasOne(Productcolor::class, 'product_id');
     }
-     public function variants()
+    public function variants()
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function product_tags()
+    {
+        return $this->belongsToMany(Tag::class, 'product_tag');
     }
 }

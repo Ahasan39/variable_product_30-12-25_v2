@@ -221,31 +221,6 @@
                                             
                                                 <button  type="submit" id="addToCartBtn" class="btn btn-primary">কার্টে যোগ করুন</button>
                                                 <button type="button" id="orderNowBtn" class="btn btn-success">অর্ডার করুন</button>
-                                                                @php
-                                                                        $tags = json_decode($details->tags, true);
-                                                                    @endphp
-                                                               <style>
-    .tag-badge {
-        margin-top:40px;
-        display: inline-block;
-        background-color: #4CAF50; /* সবুজ রঙ */
-        color: white;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        margin-right: 5px;
-    }
-</style>
-
-@if($tags)
-<br>
-    <div>
-        Tags:
-        @foreach($tags as $tag)
-            <span class="tag-badge">{{ $tag }}</span>
-        @endforeach
-    </div>
-@endif
 </form>
                                             
                                             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

@@ -20,7 +20,8 @@ use Toastr;
 use File;
 use Str;
 use Image;
-use DB;
+use App\Models\Tag;
+use DB; 
 
 class ProductController extends Controller
 {
@@ -51,12 +52,39 @@ class ProductController extends Controller
     
     public function index(Request $request)
     {
-        if($request->keyword){
-            $data = Product::orderBy('id','DESC')->where('name', 'LIKE', '%' . $request->keyword . "%")->with('image','category')->paginate(50);
-        }else{
-            $data = Product::orderBy('id','DESC')->with('image','category')->paginate(50);
+        $keyword = $request->keyword;
+        $query = Product::orderBy('id', 'DESC')->with('image', 'category', 'variants');
+
+        if ($keyword) {
+            // Check for hashtag search
+            if (str_starts_with($keyword, '#')) {
+                $tagName = ltrim($keyword, '#');
+                $query->whereHas('product_tags', function ($q) use ($tagName) {
+                    $q->where('name', 'LIKE', '%' . $tagName . '%')
+                      ->orWhere('slug', 'LIKE', '%' . $tagName . '%');
+                });
+            } else {
+                // Check if it's an exact SKU match first
+                $skuProduct = ProductVariant::where('sku', $keyword)->first();
+                if ($skuProduct) {
+                    $query->where('id', $skuProduct->product_id);
+                } else {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('name', 'LIKE', '%' . $keyword . '%')
+                          ->orWhere('product_code', 'LIKE', '%' . $keyword . '%')
+                          ->orWhereHas('product_tags', function ($qt) use ($keyword) {
+                              $qt->where('name', 'LIKE', '%' . $keyword . '%');
+                          })
+                          ->orWhereHas('variants', function ($qv) use ($keyword) {
+                              $qv->where('sku', 'LIKE', '%' . $keyword . '%');
+                          });
+                    });
+                }
+            }
         }
-        return view('backEnd.product.index',compact('data'));
+
+        $data = $query->paginate(50);
+        return view('backEnd.product.index', compact('data'));
     }
     public function create()
     {
@@ -104,6 +132,23 @@ class ProductController extends Controller
 
             // Create product
             $product = Product::create($input);
+
+            // Sync Tags
+            if ($request->tags) {
+                $tags = explode(',', $request->tags);
+                $tagIds = [];
+                foreach ($tags as $tagName) {
+                    $tagName = trim($tagName);
+                    if ($tagName) {
+                        $tag = Tag::firstOrCreate(
+                            ['name' => $tagName],
+                            ['slug' => Str::slug($tagName)]
+                        );
+                        $tagIds[] = $tag->id;
+                    }
+                }
+                $product->product_tags()->sync($tagIds);
+            }
 
             // Store color images separately
             $colorImagesData = [];
@@ -198,6 +243,36 @@ class ProductController extends Controller
         }
     }
 
+    public function edit($id)
+    {
+        $edit_data = Product::with(['images', 'variants.color', 'variants.size', 'variants.images', 'product_tags'])->findOrFail($id);
+        $categories = Category::where('parent_id', '0')->where('status', 1)->with('childrenCategories')->get();
+        $brands = Brand::where('status', 1)->get();
+        $sizes = Size::where('status', 1)->get();
+        $colors = Color::where('status', 1)->get();
+        $subcategory = Subcategory::where('category_id', $edit_data->category_id)->get();
+        $childcategory = Childcategory::where('subcategory_id', $edit_data->subcategory_id)->get();
+        $selectsizes = Productsize::where('product_id', $id)->get();
+        $selectcolors = Productcolor::where('product_id', $id)->get();
+        
+        $existingVariants = $edit_data->variants->groupBy('color_id');
+
+        return view('backEnd.product.edit', [
+            'edit_data' => $edit_data,
+            'categories' => $categories,
+            'brands' => $brands,
+            'totalsizes' => $sizes, // For main edit view
+            'totalcolors' => $colors, // For main edit view
+            'sizes' => $sizes, // For variants view
+            'colors' => $colors, // For variants view
+            'subcategory' => $subcategory,
+            'childcategory' => $childcategory,
+            'selectsizes' => $selectsizes,
+            'selectcolors' => $selectcolors,
+            'existingVariants' => $existingVariants
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $this->validate($request, [
@@ -227,6 +302,23 @@ class ProductController extends Controller
             $input['childcategory_id'] = $request->childcategory_id ?? null;
 
             $product->update($input);
+
+            // Sync Tags
+            if ($request->tags) {
+                $tags = explode(',', $request->tags);
+                $tagIds = [];
+                foreach ($tags as $tagName) {
+                    $tagName = trim($tagName);
+                    if ($tagName) {
+                        $tag = Tag::firstOrCreate(
+                            ['name' => $tagName],
+                            ['slug' => Str::slug($tagName)]
+                        );
+                        $tagIds[] = $tag->id;
+                    }
+                }
+                $product->product_tags()->sync($tagIds);
+            }
 
             // Delete old variants and their images
             foreach ($product->variants as $variant) {

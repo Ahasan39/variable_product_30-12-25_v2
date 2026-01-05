@@ -51,9 +51,20 @@ class OrderController extends Controller
             $show_data = Order::latest()->with('shipping','status','orderdetails','order_status');
             if($request->keyword){
                 $show_data = $show_data->where(function ($query) use ($request) {
-                    $query->orWhere('invoice_id', 'LIKE', '%' . $request->keyword . '%')
-                          ->orWhereHas('shipping', function ($subQuery) use ($request) {
-                              $subQuery->where('phone', $request->keyword);
+                    $keyword = $request->keyword;
+                    $query->orWhere('invoice_id', 'LIKE', '%' . $keyword . '%')
+                          ->orWhereHas('shipping', function ($subQuery) use ($keyword) {
+                              $subQuery->where('phone', 'LIKE', '%' . $keyword . '%')
+                                       ->orWhere('name', 'LIKE', '%' . $keyword . '%');
+                          })
+                          ->orWhereHas('orderdetails', function ($odQuery) use ($keyword) {
+                              $odQuery->where('product_name', 'LIKE', '%' . $keyword . '%')
+                                      ->orWhereHas('product', function ($pQuery) use ($keyword) {
+                                          $pQuery->where('product_code', 'LIKE', '%' . $keyword . '%')
+                                                 ->orWhereHas('variants', function ($vQuery) use ($keyword) {
+                                                     $vQuery->where('sku', 'LIKE', '%' . $keyword . '%');
+                                                 });
+                                      });
                           });
                 });
             }
@@ -401,7 +412,17 @@ public function bulk_courier($slug, Request $request)
         $products = Product::select('id', 'name','new_price','stock')
             ->where('status', 1);
         if ($request->keyword) {
-            $products = $products->where('name', 'LIKE', '%' . $request->keyword . "%");
+            $keyword = $request->keyword;
+            $products = $products->where(function ($q) use ($keyword) {
+                $q->where('name', 'LIKE', '%' . $keyword . '%')
+                  ->orWhere('product_code', 'LIKE', '%' . $keyword . '%')
+                  ->orWhereHas('product_tags', function ($qt) use ($keyword) {
+                      $qt->where('name', 'LIKE', '%' . $keyword . '%');
+                  })
+                  ->orWhereHas('variants', function ($qv) use ($keyword) {
+                      $qv->where('sku', 'LIKE', '%' . $keyword . '%');
+                  });
+            });
         }
         if ($request->category_id) {
             $products = $products->where('category_id', $request->category_id);
@@ -422,7 +443,19 @@ public function bulk_courier($slug, Request $request)
                 $query->where('order_status', 6);
             });
         if ($request->keyword) {
-            $orders = $orders->where('name', 'LIKE', '%' . $request->keyword . "%");
+            $keyword = $request->keyword;
+            $orders = $orders->where(function ($q) use ($keyword) {
+                $q->where('product_name', 'LIKE', '%' . $keyword . '%')
+                  ->orWhereHas('product', function ($pq) use ($keyword) {
+                      $pq->where('product_code', 'LIKE', '%' . $keyword . '%')
+                        ->orWhereHas('product_tags', function ($qt) use ($keyword) {
+                            $qt->where('name', 'LIKE', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('variants', function ($qv) use ($keyword) {
+                            $qv->where('sku', 'LIKE', '%' . $keyword . '%');
+                        });
+                  });
+            });
         }
         if ($request->user_id) {
             $orders = $orders->whereHas('order', function ($query) use ($request) {
@@ -440,7 +473,7 @@ public function bulk_courier($slug, Request $request)
     }
 
     public function order_create(){
-        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->get();
+        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants')->get();
         $cartinfo  = Cart::instance('pos_shopping')->content();
         $shippingcharge = ShippingCharge::where('status',1)->get();
         return view('backEnd.order.create',compact('products','cartinfo','shippingcharge'));
@@ -692,7 +725,7 @@ public function bulk_courier($slug, Request $request)
         return redirect()->back();
     }
     public function order_edit($invoice_id){
-        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->get();
+        $products = Product::select('id','name','new_price','product_code')->where(['status'=>1])->with('variants')->get();
         $shippingcharge = ShippingCharge::where('status',1)->get();
         $order = Order::where('invoice_id',$invoice_id)->first();
         $cartinfo  = Cart::instance('pos_shopping')->destroy();

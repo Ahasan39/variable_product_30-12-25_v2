@@ -26,6 +26,8 @@ use App\Models\OrderDetails;
 use App\Models\Payment;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\Tag;
+use App\Models\ProductVariant; 
 use Session;
 use Cart;
 use Auth;
@@ -281,35 +283,94 @@ class FrontendController extends Controller
     }
     public function livesearch(Request $request)
     {
-        $products = Product::select('id', 'name', 'slug', 'new_price', 'old_price')
+        $keyword = $request->keyword;
+        $category = $request->category;
+
+        if (empty($keyword) && empty($category)) {
+            return view('frontEnd.layouts.ajax.search', ['products' => []]);
+        }
+
+        $query = Product::select('id', 'name', 'slug', 'new_price', 'old_price')
             ->where('status', 1)
             ->with('image');
-        if ($request->keyword) {
-            $products = $products->where('name', 'LIKE', '%' . $request->keyword . "%");
-        }
-        if ($request->category) {
-            $products = $products->where('category_id', $request->category);
-        }
-        $products = $products->get();
 
-        if (empty($request->category) && empty($request->keyword)) {
-            $products = [];
+        if ($keyword) {
+            // Check for hashtag search
+            if (str_starts_with($keyword, '#')) {
+                $tagName = ltrim($keyword, '#');
+                $query->whereHas('product_tags', function ($q) use ($tagName) {
+                    $q->where('name', 'LIKE', '%' . $tagName . '%')
+                      ->orWhere('slug', 'LIKE', '%' . $tagName . '%');
+                });
+            } else {
+                // Check if it's an exact SKU match first
+                $skuProduct = ProductVariant::where('sku', $keyword)->first();
+                if ($skuProduct) {
+                    $query->where('id', $skuProduct->product_id);
+                } else {
+                    $query->where(function($q) use ($keyword) {
+                        $q->where('name', 'LIKE', '%' . $keyword . '%')
+                          ->orWhere('product_code', 'LIKE', '%' . $keyword . '%')
+                          ->orWhereHas('product_tags', function($qt) use ($keyword) {
+                              $qt->where('name', 'LIKE', '%' . $keyword . '%');
+                          })
+                          ->orWhereHas('variants', function($qv) use ($keyword) {
+                              $qv->where('sku', 'LIKE', '%' . $keyword . '%');
+                          });
+                    });
+                }
+            }
         }
+
+        if ($category) {
+            $query->where('category_id', $category);
+        }
+
+        $products = $query->get();
         return view('frontEnd.layouts.ajax.search', compact('products'));
     }
     public function search(Request $request)
     {
-        $products = Product::select('id', 'name', 'slug', 'new_price', 'old_price')
-            ->where('status', 1)
-            ->with('image');
-        if ($request->keyword) {
-            $products = $products->where('name', 'LIKE', '%' . $request->keyword . "%");
-        }
-        if ($request->category) {
-            $products = $products->where('category_id', $request->category);
-        }
-        $products = $products->paginate(36);
         $keyword = $request->keyword;
+        $category = $request->category;
+
+        $query = Product::select('id', 'name', 'slug', 'new_price', 'old_price')
+            ->where('status', 1)
+            ->with('image', 'prosizes', 'procolors');
+
+        if ($keyword) {
+            // Check for hashtag search
+            if (str_starts_with($keyword, '#')) {
+                $tagName = ltrim($keyword, '#');
+                $query->whereHas('product_tags', function ($q) use ($tagName) {
+                    $q->where('name', 'LIKE', '%' . $tagName . '%')
+                      ->orWhere('slug', 'LIKE', '%' . $tagName . '%');
+                });
+            } else {
+                // Check if it's an exact SKU match first
+                $skuProduct = ProductVariant::where('sku', $keyword)->first();
+                if ($skuProduct) {
+                    $query->where('id', $skuProduct->product_id);
+                } else {
+                    $query->where(function($q) use ($keyword) {
+                        $q->where('name', 'LIKE', '%' . $keyword . '%')
+                          ->orWhere('product_code', 'LIKE', '%' . $keyword . '%')
+                          ->orWhereHas('product_tags', function($qt) use ($keyword) {
+                              $qt->where('name', 'LIKE', '%' . $keyword . '%');
+                          })
+                          ->orWhereHas('variants', function($qv) use ($keyword) {
+                              $qv->where('sku', 'LIKE', '%' . $keyword . '%');
+                          });
+                    });
+                }
+            }
+        }
+
+        if ($category) {
+            $query->where('category_id', $category);
+        }
+
+        $products = $query->paginate(36);
         return view('frontEnd.layouts.pages.search', compact('products', 'keyword'));
     }
 
